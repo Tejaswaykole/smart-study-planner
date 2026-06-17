@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyFlow Dashboard — Plan. Focus. Achieve.</title>
+  <meta name="description"
+    content="Manage subjects, daily tasks, exams, goals, Pomodoro focus sessions, and view performance analytics.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="dashboard.css">
+  <!-- Chart.js CDN for premium analytics visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="dashboard-body">
+
+  <!-- Main Container -->
+  <div class="db-container">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="index.html" class="logo">
+          <span class="logo-mark">🎓</span>
+          <span>StudyFlow</span>
+        </a>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-tab="dashboard">
+          <span class="nav-icon">📊</span> Overview
+        </button>
+        <button class="nav-item" data-tab="subjects">
+          <span class="nav-icon">📚</span> Subjects
+        </button>
+        <button class="nav-item" data-tab="exams">
+          <span class="nav-icon">📅</span> Exams
+        </button>
+        <button class="nav-item" data-tab="tasks">
+          <span class="nav-icon">✅</span> Tasks
+        </button>
+        <button class="nav-item" data-tab="pomodoro">
+          <span class="nav-icon">⏱️</span> Pomodoro Timer
+        </button>
+        <button class="nav-item" data-tab="goals">
+          <span class="nav-icon">🎯</span> Goals
+        </button>
+        <button class="nav-item" data-tab="analytics">
+          <span class="nav-icon">📈</span> Analytics
+        </button>
+        <button class="nav-item" data-tab="achievements">
+          <span class="nav-icon">🏆</span> Achievements
+        </button>
+        <button class="nav-item" data-tab="admin">
+          <span class="nav-icon">🛡️</span> Admin Panel
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="index.html" class="btn btn-outline btn-sidebar-back">← Exit Dashboard</a>
+      </div>
+    </aside>
+
+    <!-- MAIN APP AREA -->
+    <main class="main-content">
+
+      <!-- TOP NAVBAR -->
+      <header class="db-header">
+        <div class="header-welcome">
+          <h1 id="welcome-text">Hello, Student! 👋</h1>
+          <p id="current-date-str" class="muted-text">June 13, 2026</p>
+        </div>
+
+        <div class="header-actions">
+          <!-- Color Therapy selector -->
+          <div class="theme-picker-container">
+            <span class="picker-label">Therapy Mode:</span>
+            <div class="theme-buttons">
+              <button class="theme-btn focus-theme-btn active" data-theme-mode="focus"
+                title="Focus Mode (Blue)"></button>
+              <button class="theme-btn calm-theme-btn" data-theme-mode="calm" title="Calm Mode (Green)"></button>
+              <button class="theme-btn creative-theme-btn" data-theme-mode="creative"
+                title="Creative Mode (Purple)"></button>
+            </div>
+            <button id="dark-mode-toggle" class="theme-mode-toggle" title="Toggle Dark/Light Mode">🌙</button>
+          </div>
+
+          <!-- Smart Reminders Notification Bell -->
+          <div class="notification-bell-container">
+            <button id="notification-bell" class="notification-bell">
+              🔔
+              <span id="notification-badge" class="badge dot-badge hide">0</span>
+            </button>
+            <div id="notification-dropdown" class="notification-dropdown hide">
+              <div class="dropdown-header">
+                <h3>Smart Reminders</h3>
+                <button id="mark-all-read-btn" class="btn-text">Dismiss All</button>
+              </div>
+              <div id="notifications-list" class="notifications-list">
+                <!-- Smart alerts dynamically injected -->
+                <div class="no-notifications">No urgent alerts. Looking good!</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- VIEW PANELS -->
+      <div class="panel-container">
+
+        <!-- 1. OVERVIEW / DASHBOARD PANEL -->
+        <section id="dashboard-tab" class="tab-panel active">
+          <!-- Stats Summary Grid -->
+          <div class="stats-grid">
+            <div class="stat-card glass-card">
+              <div class="stat-icon">🔥</div>
+              <div class="stat-info">
+                <h3>Daily Streak</h3>
+                <p class="stat-val" id="streak-val">1 Day</p>
+                <p class="stat-sub" id="streak-weekly-val">Weekly: 1/7 days</p>
+              </div>
+            </div>
+            <div class="stat-card glass-card">
+              <div class="stat-icon">⏱️</div>
+              <div class="stat-info">
+                <h3>Study Hours</h3>
+                <p class="stat-val" id="total-hours-val">0.0h</p>
+                <p class="stat-sub" id="total-sessions-val">0 sessions completed</p>
+              </div>
+            </div>
+            <div class="stat-card glass-card">
+              <div class="stat-icon">✅</div>
+              <div class="stat-info">
+                <h3>Tasks Completed</h3>
+                <p class="stat-val" id="tasks-count-val">0 / 0</p>
+                <p class="stat-sub" id="tasks-pct-val">0% completion rate</p>
+              </div>
+            </div>
+            <div class="stat-card glass-card">
+              <div class="stat-icon">🎯</div>
+              <div class="stat-info">
+                <h3>Active Goals</h3>
+                <p class="stat-val" id="goals-count-val">0 Goals</p>
+                <p class="stat-sub" id="goals-completed-val">0 completed goals</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mid Dashboard Layout -->
+          <div class="dashboard-mid-grid">
+            <!-- Left: Motivation and Overview list -->
+            <div class="dashboard-column flex-column">
+              <!-- Motivation Widget -->
+              <div class="motivational-card glass-card">
+                <div class="quote-header">💡 Daily Focus Pill</div>
+                <blockquote id="quote-text">"The secret of getting ahead is getting started."</blockquote>
+                <cite id="quote-author">— Mark Twain</cite>
+                <div class="study-tip-box">
+                  <strong>Study Tip:</strong> <span id="study-tip-text">Try studying in 25-minute Pomodoro block
+                    intervals to maximize focus and minimize fatigue.</span>
+                </div>
+              </div>
+
+              <!-- Quick Progress Banner -->
+              <div class="encouragement-card glass-card" id="encouragement-box">
+                <h3>Keep going! 🚀</h3>
+                <p id="encouragement-text">You haven't studied yet today. Set up a subject and start your first Pomodoro
+                  session to kickstart your streak!</p>
+              </div>
+            </div>
+
+            <!-- Right: Alerts and Due items -->
+            <div class="dashboard-column flex-column">
+              <!-- Alerts List -->
+              <div class="alerts-panel glass-card">
+                <h3>🔔 Reminders Panel</h3>
+                <div id="dashboard-reminders-list" class="dashboard-reminders-list">
+                  <!-- JS dynamically populates notifications here -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Tasks & Schedule -->
+          <div class="dashboard-bottom-grid">
+            <div class="glass-card">
+              <div class="card-header-actions">
+                <h3>📋 Tasks Due Today</h3>
+                <button class="btn btn-outline btn-sm" onclick="switchTab('tasks')">Manage Tasks</button>
+              </div>
+              <div id="today-tasks-list" class="today-tasks-list">
+                <!-- Populated via JS -->
+              </div>
+            </div>
+            <div class="glass-card">
+              <div class="card-header-actions">
+                <h3>📅 Upcoming Exams</h3>
+                <button class="btn btn-outline btn-sm" onclick="switchTab('exams')">Manage Exams</button>
+              </div>
+              <div id="upcoming-exams-list" class="upcoming-exams-list">
+                <!-- Populated via JS -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. SUBJECTS PANEL -->
+        <section id="subjects-tab" class="tab-panel">
+          <div class="panel-header-actions">
+            <h2>📚 Subjects Management</h2>
+            <button class="btn btn-primary" onclick="openModal('add-subject-modal')">+ Add Subject</button>
+          </div>
+
+          <!-- Subject Performance Summary -->
+          <div class="subject-stats-banner">
+            <div class="sub-stat-badge">🔥 Most Studied: <span id="most-studied-sub-badge">-</span></div>
+            <div class="sub-stat-badge">❄️ Least Studied: <span id="least-studied-sub-badge">-</span></div>
+          </div>
+
+          <div class="grid features" id="subjects-grid">
+            <!-- Dynamic Subject Cards injected here -->
+          </div>
+        </section>
+
+        <!-- 3. EXAMS PANEL -->
+        <section id="exams-tab" class="tab-panel">
+          <div class="panel-header-actions">
+            <h2>📅 Exam Schedules</h2>
+            <button class="btn btn-primary" onclick="openModal('add-exam-modal')">+ Schedule Exam</button>
+          </div>
+
+          <div class="exams-container-grid" id="exams-grid">
+            <!-- Dynamic Exam Cards with countdowns injected here -->
+          </div>
+        </section>
+
+        <!-- 4. TASKS PANEL -->
+        <section id="tasks-tab" class="tab-panel">
+          <div class="panel-header-actions">
+            <h2>✅ Daily Tasks List</h2>
+            <button class="btn btn-primary" onclick="openModal('add-task-modal')">+ Create Task</button>
+          </div>
+
+          <!-- Task Filters -->
+          <div class="task-filters-bar glass-card">
+            <div class="filter-group">
+              <button class="btn btn-sm btn-outline active" data-task-filter="all">All</button>
+              <button class="btn btn-sm btn-outline" data-task-filter="pending">Pending</button>
+              <button class="btn btn-sm btn-outline" data-task-filter="completed">Completed</button>
+            </div>
+            <div class="filter-group">
+              <label for="task-sort">Sort by:</label>
+              <select id="task-sort" class="form-control select-sm">
+                <option value="dueDate">Due Date</option>
+                <option value="priority">Priority</option>
+                <option value="subject">Subject</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="tasks-list-container" id="tasks-list">
+            <!-- Dynamic Task items injected here -->
+          </div>
+        </section>
+
+        <!-- 5. POMODORO TIMER PANEL -->
+        <section id="pomodoro-tab" class="tab-panel">
+          <div class="pomodoro-grid">
+
+            <!-- Timer Card -->
+            <div class="glass-card timer-card">
+              <h2>⏱️ Pomodoro Focus Timer</h2>
+
+              <!-- Timer Configuration -->
+              <div class="timer-config-inputs">
+                <div class="input-group-sm">
+                  <label for="study-duration-input">Study Time (min)</label>
+                  <input type="number" id="study-duration-input" class="form-control" value="25" min="1" max="120">
+                </div>
+                <div class="input-group-sm">
+                  <label for="break-duration-input">Break Time (min)</label>
+                  <input type="number" id="break-duration-input" class="form-control" value="5" min="1" max="60">
+                </div>
+              </div>
+
+              <div class="timer-subject-picker">
+                <label for="timer-subject-select">Focus Subject:</label>
+                <select id="timer-subject-select" class="form-control">
+                  <option value="">-- No Subject Tag --</option>
+                </select>
+              </div>
+
+              <!-- Main Visual Circle Timer -->
+              <div class="timer-display-container">
+                <div class="timer-circle">
+                  <svg class="progress-ring" width="220" height="220">
+                    <circle class="progress-ring-bg" stroke="#1f2747" stroke-width="8" fill="transparent" r="100"
+                      cx="110" cy="110" />
+                    <circle class="progress-ring-circle" id="timer-ring" stroke="var(--primary)" stroke-width="8"
+                      fill="transparent" r="100" cx="110" cy="110" />
+                  </svg>
+                  <div class="timer-text-overlay">
+                    <span id="timer-state-label" class="timer-state">Focus</span>
+                    <span id="timer-time" class="timer-digits">25:00</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Timer Controls -->
+              <div class="timer-controls">
+                <button id="timer-start-btn" class="btn btn-primary btn-lg">Start</button>
+                <button id="timer-pause-btn" class="btn btn-outline btn-lg" disabled>Pause</button>
+                <button id="timer-reset-btn" class="btn btn-outline btn-lg">Reset</button>
+              </div>
+            </div>
+
+            <!-- Focus Logs Card -->
+            <div class="glass-card focus-logs-card">
+              <h3>📜 Completed Focus Sessions</h3>
+              <div id="focus-sessions-list" class="focus-sessions-list">
+                <div class="empty-state">No sessions logged today. Time to focus!</div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- 6. GOALS PANEL -->
+        <section id="goals-tab" class="tab-panel">
+          <div class="panel-header-actions">
+            <h2>🎯 Goal Tracking System</h2>
+            <button class="btn btn-primary" onclick="openModal('add-goal-modal')">+ Create Goal</button>
+          </div>
+
+          <div class="goals-container-grid" id="goals-grid">
+            <!-- Dynamic Goals injected here -->
+          </div>
+        </section>
+
+        <!-- 7. ANALYTICS PANEL -->
+        <section id="analytics-tab" class="tab-panel">
+          <h2>📈 Productivity & Performance Analytics</h2>
+
+          <div class="analytics-charts-grid">
+            <!-- Study Hours over time -->
+            <div class="glass-card chart-card">
+              <h3>Weekly Study Hours</h3>
+              <div class="chart-wrapper">
+                <canvas id="weekly-hours-chart"></canvas>
+              </div>
+            </div>
+
+            <!-- Subject Performance breakdown -->
+            <div class="glass-card chart-card">
+              <h3>Study Distribution by Subject</h3>
+              <div class="chart-wrapper">
+                <canvas id="subject-hours-chart"></canvas>
+              </div>
+            </div>
+
+            <div class="glass-card chart-card">
+              <h3>Daily Task Completion Trends</h3>
+              <div class="chart-wrapper">
+                <canvas id="task-completion-chart"></canvas>
+              </div>
+            </div>
+
+            <!-- KPI Summary Performance -->
+            <div class="glass-card text-kpi-card">
+              <h3>Key Performance Indicators</h3>
+              <div class="kpi-list">
+                <div class="kpi-item">
+                  <span class="kpi-lbl">Most Productive Day:</span>
+                  <span class="kpi-val" id="kpi-prod-day">Wednesday</span>
+                </div>
+                <div class="kpi-item">
+                  <span class="kpi-lbl">Avg. Focus Session Length:</span>
+                  <span class="kpi-val" id="kpi-avg-session">25.0 min</span>
+                </div>
+                <div class="kpi-item">
+                  <span class="kpi-lbl">Subject Completion Rate:</span>
+                  <span class="kpi-val" id="kpi-avg-completion">82%</span>
+                </div>
+                <div class="kpi-item">
+                  <span class="kpi-lbl">Monthly Study Target:</span>
+                  <span class="kpi-val" id="kpi-target-progress">12.5h / 50.0h</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 8. ACHIEVEMENTS PANEL -->
+        <section id="achievements-tab" class="tab-panel">
+          <h2>🏆 Achievement & Rewards System</h2>
+          <p class="muted-text">Unlock special milestone badges as you complete focus sessions, goals, tasks, and build
+            your study streaks!</p>
+
+          <div class="badges-grid" id="achievements-grid">
+            <!-- Dynamic Milestone Badges injected here -->
+          </div>
+        </section>
+
+        <!-- 9. ADMIN PANEL -->
+        <section id="admin-tab" class="tab-panel">
+          <div class="panel-header-actions">
+            <h2>🛡️ Admin Institutional Analytics</h2>
+            <div class="admin-actions">
+              <button class="btn btn-outline" onclick="exportReports('csv')">📊 Export CSV Report</button>
+              <button class="btn btn-primary" onclick="exportReports('pdf')">📄 Export PDF Report</button>
+            </div>
+          </div>
+
+          <div class="admin-stats-summary stats-grid">
+            <div class="stat-card glass-card">
+              <div class="stat-icon">👥</div>
+              <div class="stat-info">
+                <h3>Total Institutional Users</h3>
+                <p class="stat-val">12,450</p>
+                <p class="stat-sub">+18% growth this semester</p>
+              </div>
+            </div>
+            <div class="stat-card glass-card">
+              <div class="stat-icon">📈</div>
+              <div class="stat-info">
+                <h3>Daily Active Users (DAU)</h3>
+                <p class="stat-val">4,280</p>
+                <p class="stat-sub">34% active study rate</p>
+              </div>
+            </div>
+            <div class="stat-card glass-card">
+              <div class="stat-icon">🎓</div>
+              <div class="stat-info">
+                <h3>Average Study Hours / User</h3>
+                <p class="stat-val">8.4 hrs/week</p>
+                <p class="stat-sub">12% increase since midterm</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="admin-data-grid">
+            <!-- Mock Daily Active User Trends Chart -->
+            <div class="glass-card admin-chart-card">
+              <h3>Daily Active Users & Activity Trends (Institution-Wide)</h3>
+              <div class="chart-wrapper">
+                <canvas id="admin-activity-chart"></canvas>
+              </div>
+            </div>
+
+            <!-- Simulated Institutional Activity Log -->
+            <div class="glass-card admin-logs-card">
+              <h3>Activity & Audit Log (Simulated)</h3>
+              <div class="table-container">
+                <table class="table" id="admin-audit-log-table">
+                  <thead>
+                    <tr>
+                      <th>User ID</th>
+                      <th>Activity</th>
+                      <th>Subject Tag</th>
+                      <th>Duration / Info</th>
+                      <th>Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Injected via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- MODALS -->
+
+  <!-- Add Subject Modal -->
+  <div id="add-subject-modal" class="modal-backdrop hide">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="subject-modal-title">Create New Subject</h3>
+        <button class="modal-close-btn" onclick="closeModal('add-subject-modal')">&times;</button>
+      </div>
+      <form id="add-subject-form" onsubmit="saveSubject(event)">
+        <input type="hidden" id="edit-subject-id">
+        <div class="form-group">
+          <label for="subject-name">Subject Name</label>
+          <input type="text" id="subject-name" class="form-control" placeholder="e.g. Mathematics, Organic Chemistry"
+            required>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-half">
+            <label for="subject-priority">Priority</label>
+            <select id="subject-priority" class="form-control">
+              <option value="Low">Low</option>
+              <option value="Medium" selected>Medium</option>
+              <option value="High">High</option>
+            </select>
+          </div>
+          <div class="form-group col-half">
+            <label for="subject-difficulty">Difficulty</label>
+            <select id="subject-difficulty" class="form-control">
+              <option value="Easy">Easy</option>
+              <option value="Medium" selected>Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="subject-color">Theme Color</label>
+          <div class="color-picker-grid">
+            <input type="radio" id="col1" name="sub-color" value="#6366f1" checked><label for="col1"
+              style="background:#6366f1;"></label>
+            <input type="radio" id="col2" name="sub-color" value="#3b82f6"><label for="col2"
+              style="background:#3b82f6;"></label>
+            <input type="radio" id="col3" name="sub-color" value="#10b981"><label for="col3"
+              style="background:#10b981;"></label>
+            <input type="radio" id="col4" name="sub-color" value="#f59e0b"><label for="col4"
+              style="background:#f59e0b;"></label>
+            <input type="radio" id="col5" name="sub-color" value="#ef4444"><label for="col5"
+              style="background:#ef4444;"></label>
+            <input type="radio" id="col6" name="sub-color" value="#ec4899"><label for="col6"
+              style="background:#ec4899;"></label>
+            <input type="radio" id="col7" name="sub-color" value="#8b5cf6"><label for="col7"
+              style="background:#8b5cf6;"></label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('add-subject-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Subject</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Exam Modal -->
+  <div id="add-exam-modal" class="modal-backdrop hide">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="exam-modal-title">Schedule New Exam</h3>
+        <button class="modal-close-btn" onclick="closeModal('add-exam-modal')">&times;</button>
+      </div>
+      <form id="add-exam-form" onsubmit="saveExam(event)">
+        <input type="hidden" id="edit-exam-id">
+        <div class="form-group">
+          <label for="exam-name">Exam / Test Name</label>
+          <input type="text" id="exam-name" class="form-control" placeholder="e.g. Midterm, Final Presentation"
+            required>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-half">
+            <label for="exam-subject">Subject</label>
+            <select id="exam-subject" class="form-control" required>
+              <option value="">-- Choose Subject --</option>
+            </select>
+          </div>
+          <div class="form-group col-half">
+            <label for="exam-datetime">Date & Time</label>
+            <input type="datetime-local" id="exam-datetime" class="form-control" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('add-exam-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Schedule Exam</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Task Modal -->
+  <div id="add-task-modal" class="modal-backdrop hide">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="task-modal-title">Create New Task</h3>
+        <button class="modal-close-btn" onclick="closeModal('add-task-modal')">&times;</button>
+      </div>
+      <form id="add-task-form" onsubmit="saveTask(event)">
+        <input type="hidden" id="edit-task-id">
+        <div class="form-group">
+          <label for="task-title">Task Title</label>
+          <input type="text" id="task-title" class="form-control" placeholder="e.g. Read Chapter 4, Solve exercise set"
+            required>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-half">
+            <label for="task-subject">Subject</label>
+            <select id="task-subject" class="form-control">
+              <option value="">-- No Subject --</option>
+            </select>
+          </div>
+          <div class="form-group col-half">
+            <label for="task-duedate">Due Date</label>
+            <input type="date" id="task-duedate" class="form-control" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="task-priority">Priority</label>
+          <select id="task-priority" class="form-control">
+            <option value="Low">Low</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="High">High</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('add-task-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Goal Modal -->
+  <div id="add-goal-modal" class="modal-backdrop hide">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="goal-modal-title">Set Study Goal</h3>
+        <button class="modal-close-btn" onclick="closeModal('add-goal-modal')">&times;</button>
+      </div>
+      <form id="add-goal-form" onsubmit="saveGoal(event)">
+        <input type="hidden" id="edit-goal-id">
+        <div class="form-group">
+          <label for="goal-title">Goal Description</label>
+          <input type="text" id="goal-title" class="form-control"
+            placeholder="e.g. Finish chemistry project, Study 10 hours this week" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-half">
+            <label for="goal-targetdate">Target Date</label>
+            <input type="date" id="goal-targetdate" class="form-control" required>
+          </div>
+          <div class="form-group col-half">
+            <label for="goal-progress">Initial Progress (%)</label>
+            <input type="number" id="goal-progress" class="form-control" value="0" min="0" max="100">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('add-goal-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Set Goal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- UI Audio alert elements for timer completion (Uses synthesizer fallback in JS, but nice tags here for compatibility) -->
+  <audio id="success-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-84.wav" preload="auto"></audio>
+  <audio id="break-sound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav" preload="auto"></audio>
+
+  <!-- Script Import -->
+  <script src="dashboard.js"></script>
+</body>
+
+</html>===-----------==

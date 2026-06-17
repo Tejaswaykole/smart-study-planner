@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>StudyFlow — Plan. Focus. Achieve.</title>
+<meta name="description" content="All-in-one study planner: subjects, exams, daily tasks, progress tracking, Pomodoro, streaks." />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- NAV -->
+  <header class="nav">
+    <div class="container nav-inner">
+      <a href="#" class="logo">
+        <span class="logo-mark">🎓</span>
+        <span>StudyFlow</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#how">How it works</a>
+        <a href="dashboard.html" class="btn btn-ghost">Sign in</a>
+        <a href="dashboard.html" class="btn btn-primary">Get started →</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container hero-inner">
+      <span class="pill">✨ Smart Study Planner</span>
+      <h1>StudyFlow <span class="gradient-text">– Plan. Focus. Achieve.</span></h1>
+      <p class="lead">
+        StudyFlow brings your subjects, exams, daily tasks and progress into one
+        focused dashboard — so you can spend less time organising and more time learning.
+      </p>
+      <div class="hero-cta">
+        <a href="dashboard.html" class="btn btn-primary btn-lg">Start free →</a>
+        <a href="#features" class="btn btn-outline btn-lg">Explore features</a>
+      </div>
+      <ul class="hero-badges">
+        <li>✓ No credit card</li>
+        <li>✓ Dark mode</li>
+        <li>✓ Pomodoro built-in</li>
+        <li>✓ Streak tracking</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features" class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>Smart Planning for Better Learning.</h2>
+        <p>Let StudyFlow organize your schedule so you can focus on learning.</p>
+      </div>
+      <div class="grid features" id="featureGrid">
+        <!-- cards injected by app.js -->
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how" class="section section-alt">
+    <div class="container grid how">
+      <div><div class="step-num">01</div><h3>Add your subjects</h3><p>Capture what you're studying with priority and difficulty.</p></div>
+      <div><div class="step-num">02</div><h3>Schedule exams & tasks</h3><p>Pin exam dates, then break work into focused daily tasks.</p></div>
+      <div><div class="step-num">03</div><h3>Track progress</h3><p>Watch your streak grow and completion charts climb.</p></div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section">
+    <div class="container">
+      <div class="cta-card">
+        <h2>Study flow &gt; Netflix flow</h2>
+        <p>"Ditch the Scroll, build the Streak"</p>
+        <a href="dashboard.html" class="btn btn-primary btn-lg">Create your account →</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span>© <span id="year"></span> StudyFlow</span>
+      <span>🌙 Dark mode included</span>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
