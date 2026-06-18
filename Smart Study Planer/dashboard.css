@@ -129,6 +129,11 @@ body.dashboard-body {
 .sidebar-header {
   margin-bottom: 36px;
   padding-left: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  position: relative;
 }
 
 .sidebar-nav {
@@ -1541,5 +1546,106 @@ label {
     transform: translateX(0);
     opacity: 1;
   }
+}
+
+.exam-widget-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.exam-widget-item:last-child {
+  border-bottom: none;
+}
+
+.exam-widget-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.exam-widget-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.exam-widget-title {
+  font-weight: 600;
+}
+
+.exam-widget-sub {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.exam-widget-days {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.profile-menu-wrapper {
+  position: relative;
+}
+
+.profile-menu-btn {
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  color: var(--text-primary);
+  padding: 6px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+
+.profile-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--primary-color);
+  transform: scale(1.05);
+}
+
+.profile-dropdown {
+  display: none;
+  position: absolute;
+  top: 110%;
+  left: 0;
+  min-width: 200px;
+  background: var(--card-bg);
+  border: var(--glass-border);
+  backdrop-filter: blur(20px);
+  border-radius: 12px;
+  overflow: hidden;
+  z-index: 1000;
+  box-shadow: 0 12px 32px rgba(0,0,0,.25);
+}
+
+.profile-dropdown.show {
+  display: block;
+}
+
+.profile-dropdown button {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 10px 16px;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s, color 0.2s;
+}
+
+.profile-dropdown button:hover {
+  background: rgba(255,255,255,.06);
+}
+
+.logout-item {
+  color: var(--danger) !important;
 }
 

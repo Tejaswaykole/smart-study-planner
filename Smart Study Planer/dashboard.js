@@ -1,8 +1,18 @@
+const token = localStorage.getItem('token');
+
+if (!token) {
+
+    window.location.href =
+        'login.html';
+
+}
+
 /**
  * StudyFlow Dashboard Application Logic
  * Integrates: Subjects, Exams, Tasks, Goals, Streaks, Pomodoro, Analytics, 
  * Smart Reminders, Achievements, Color Therapy, and Admin reporting.
  */
+
 
 // --- GLOBAL STATE ---
 let state = {
@@ -66,6 +76,7 @@ let adminActivityChart = null;
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
+  loadCurrentUser();
   loadDataFromStorage();
 
   loadAchievementsFromDatabase();
@@ -114,7 +125,9 @@ function loadDataFromStorage() {
 }
 
 function loadTasksFromDatabase() {
-  fetch('http://localhost:5000/tasks')
+  fetch(
+    `http://localhost:5000/tasks?userId=${localStorage.getItem('userId')}`
+  )
     .then(res => res.json())
     .then(data => {
 
@@ -134,7 +147,9 @@ function loadTasksFromDatabase() {
 }
 function loadSubjectsFromDatabase() {
 
-  fetch('http://localhost:5000/subjects')
+  fetch(
+    `http://localhost:5000/subjects?userId=${localStorage.getItem('userId')}`
+  )
     .then(res => res.json())
     .then(data => {
 
@@ -154,7 +169,9 @@ function loadSubjectsFromDatabase() {
 }
 function loadExamsFromDatabase() {
 
-  fetch('http://localhost:5000/exams')
+  fetch(
+    `http://localhost:5000/exams?userId=${localStorage.getItem('userId')}`
+  )
     .then(res => res.json())
     .then(data => {
 
@@ -173,7 +190,9 @@ function loadExamsFromDatabase() {
 }
 function loadGoalsFromDatabase() {
 
-  fetch('http://localhost:5000/goals')
+  fetch(
+    `http://localhost:5000/goals?userId=${localStorage.getItem('userId')}`
+  )
     .then(res => res.json())
     .then(data => {
 
@@ -192,7 +211,9 @@ function loadGoalsFromDatabase() {
 }
 function loadFocusSessionsFromDatabase() {
 
-  fetch('http://localhost:5000/focus-sessions')
+  fetch(
+    `http://localhost:5000/focus-sessions?userId=${localStorage.getItem('userId')}`
+  )
     .then(res => res.json())
     .then(data => {
 
@@ -464,6 +485,7 @@ function closeModal(modalId) {
 function updateDashboardUI() {
   renderStatsOverview();
   renderUpcomingSchedule();
+  renderUpcomingExamsWidget();
   renderSubjectsList();
   renderExamsList();
   renderTasksList();
@@ -589,6 +611,91 @@ function renderUpcomingSchedule() {
       }).join('');
     }
   }
+}
+
+function renderUpcomingExamsWidget() {
+
+  const container =
+    document.getElementById('upcoming-exams-widget');
+
+  if (!container) return;
+
+  const now = new Date();
+
+  const upcoming = state.exams
+    .filter(e => new Date(e.dateTime) > now)
+    .sort(
+      (a, b) =>
+        new Date(a.dateTime) -
+        new Date(b.dateTime)
+    )
+    .slice(0, 3);
+
+  if (upcoming.length === 0) {
+
+    container.innerHTML = `
+      <div class="empty-state">
+        No upcoming exams scheduled.
+      </div>
+    `;
+
+    return;
+  }
+
+  container.innerHTML = upcoming.map(exam => {
+
+    const examDate =
+      new Date(exam.dateTime);
+
+    const daysRemaining =
+      Math.ceil(
+        (examDate - now) /
+        (1000 * 60 * 60 * 24)
+      );
+
+    const subject =
+      state.subjects.find(
+        s => s.id == exam.subjectId
+      );
+
+    const color =
+      subject?.color || '#64748b';
+
+    return `
+      <div class="exam-widget-item">
+
+        <div class="exam-widget-left">
+
+          <span
+            class="exam-widget-dot"
+            style="background:${color}">
+          </span>
+
+          <div>
+
+            <div class="exam-widget-title">
+              ${escapeHtml(exam.name)}
+            </div>
+
+            <div class="exam-widget-sub">
+              ${subject?.name || 'No Subject'}
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="exam-widget-days">
+
+          ${daysRemaining}d
+
+        </div>
+
+      </div>
+    `;
+
+  }).join('');
+
 }
 
 // Fill subject selectors in modals
@@ -745,7 +852,8 @@ function saveSubject(event) {
         name,
         priority,
         difficulty,
-        color
+        color,
+        user_id: localStorage.getItem('userId')
       })
     })
       .then(res => res.json())
@@ -929,7 +1037,8 @@ function saveExam(event) {
         title: name,
         subject_id: subjectId,
         exam_date: dateTime,
-        exam_type: 'Exam'
+        exam_type: 'Exam',
+        user_id: localStorage.getItem('userId')
       })
     })
       .then(res => res.json())
@@ -1102,7 +1211,8 @@ function saveTask(event) {
         title,
         priority,
         due_date: dueDate,
-        subject_id: subjectId
+        subject_id: subjectId,
+        user_id: localStorage.getItem('userId')
       })
     })
       .then(res => res.json())
@@ -1404,7 +1514,8 @@ function logStudySession(durationMin, subjectId) {
     },
     body: JSON.stringify({
       subject_id: subjectId || null,
-      duration: durationMin
+      duration: durationMin,
+      user_id: localStorage.getItem('userId')
     })
   })
     .then(res => res.json())
@@ -1558,7 +1669,8 @@ function saveGoal(event) {
       body: JSON.stringify({
         title,
         target_date: targetDate,
-        progress
+        progress,
+        user_id: localStorage.getItem('userId')
       })
     })
       .then(res => res.json())
@@ -2333,3 +2445,63 @@ function showToast(title, message) {
 
   }, 4000);
 }
+
+function loadCurrentUser() {
+
+    const username =
+        localStorage.getItem('username');
+
+    const userLabel =
+        document.getElementById('logged-user');
+
+    if (userLabel) {
+
+        userLabel.textContent =
+            username || 'Guest';
+
+    }
+
+}
+
+function logout() {
+
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('username');
+
+    window.location.href =
+        'login.html';
+
+}
+
+function toggleProfileMenu() {
+  document.getElementById('profile-dropdown')?.classList.toggle('show');
+}
+
+function navigateTo(tabId) {
+  const btn = document.querySelector(`[data-tab="${tabId}"]`);
+  if (btn) {
+    btn.click();
+  } else {
+    showToast('Info', `${tabId.charAt(0).toUpperCase() + tabId.slice(1)} configuration coming soon!`);
+  }
+}
+
+function openProfile() {
+  showToast('Profile', 'User profile settings coming soon!');
+}
+
+function toggleTheme() {
+  const toggleBtn = document.getElementById('dark-mode-toggle');
+  if (toggleBtn) {
+    toggleBtn.click();
+  }
+}
+
+document.addEventListener('click', e => {
+  const menu = document.querySelector('.profile-menu-wrapper');
+  if (menu && !menu.contains(e.target)) {
+    document.getElementById('profile-dropdown')?.classList.remove('show');
+  }
+});
+

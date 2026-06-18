@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register — StudyFlow</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <style>
+      .register-container {
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        padding: 20px;
+        background: var(--bg-gradient);
+      }
+      .register-card {
+        width: 100%;
+        max-width: 420px;
+        padding: 40px;
+        border-radius: var(--radius-lg);
+        background: var(--card-bg);
+        border: var(--glass-border);
+        box-shadow: var(--glass-shadow);
+        backdrop-filter: blur(20px);
+      }
+      .register-header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .register-header h2 {
+        margin: 10px 0 5px;
+        font-size: 28px;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .register-header p {
+        color: var(--text-muted);
+        font-size: 14px;
+        margin: 0;
+      }
+      .logo-mark-register {
+        font-size: 40px;
+        display: block;
+        margin-bottom: 10px;
+      }
+      .form-actions {
+        margin-top: 24px;
+      }
+      .form-actions button {
+        width: 100%;
+        padding: 12px;
+        font-size: 15px;
+        font-weight: 700;
+      }
+      .login-prompt {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 14px;
+        color: var(--text-muted);
+      }
+      .login-prompt a {
+        color: var(--accent-color);
+        font-weight: 600;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .login-prompt a:hover {
+        color: var(--primary-color);
+      }
+    </style>
+</head>
+<body class="dashboard-body">
+
+    <div class="register-container">
+        <div class="register-card glass-card">
+            <div class="register-header">
+                <span class="logo-mark-register">🚀</span>
+                <h2>Create Account</h2>
+                <p>Join StudyFlow to structure your study plan</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" class="form-control" placeholder="e.g. johndoe" required>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px;">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" class="form-control" placeholder="e.g. name@student.com" required>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px;">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px;">
+                <label for="confirm-password">Confirm Password</label>
+                <input type="password" id="confirm-password" class="form-control" placeholder="••••••••" required>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn-primary" onclick="register()">Register →</button>
+            </div>
+
+            <p class="login-prompt">
+                Already have an account? 
+                <a href="login.html">Login</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="register.js"></script>
+</body>
+</html>

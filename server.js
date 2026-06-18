@@ -1,6 +1,10 @@
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
+const JWT_SECRET = 'studyflow_secret_key';
 
 const app = express();
 
@@ -29,24 +33,22 @@ app.get('/', (req, res) => {
 
 app.get('/tasks', (req, res) => {
 
-    const sql = `
-        SELECT
-            tasks.*,
-            subjects.name AS subject_name
-        FROM tasks
-        LEFT JOIN subjects
-        ON tasks.subject_id = subjects.id
-    `;
+    const userId = req.query.userId;
 
-    db.query(sql, (err, results) => {
+    db.query(
+        'SELECT * FROM tasks WHERE user_id = ?',
+        [userId],
+        (err, results) => {
 
-        if (err) {
-            console.error(err);
-            return res.status(500).json(err);
+            if (err) {
+                console.error(err);
+                return res.status(500).json(err);
+            }
+
+            res.json(results);
         }
+    );
 
-        res.json(results);
-    });
 });
 app.post('/tasks', (req, res) => {
 
@@ -54,12 +56,13 @@ app.post('/tasks', (req, res) => {
         title,
         priority,
         due_date,
-        subject_id
+        subject_id,
+        user_id
     } = req.body;
 
     db.query(
-        'INSERT INTO tasks (title, priority, due_date, subject_id) VALUES (?, ?, ?, ?)',
-        [title, priority, due_date, subject_id],
+        'INSERT INTO tasks (title, priority, due_date, subject_id, user_id) VALUES (?, ?, ?, ?, ?)',
+        [title, priority, due_date, subject_id, user_id],
         (err, result) => {
 
             if (err) {
@@ -164,14 +167,19 @@ server.on('error', (err) => {
 console.log('File loaded completely');
 
 app.get('/subjects', (req, res) => {
-    db.query('SELECT * FROM subjects', (err, results) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json(err);
-        }
+    const userId = req.query.userId;
+    db.query(
+        'SELECT * FROM subjects WHERE user_id = ?',
+        [userId],
+        (err, results) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).json(err);
+            }
 
-        res.json(results);
-    });
+            res.json(results);
+        }
+    );
 });
 app.post('/subjects', (req, res) => {
 
@@ -179,12 +187,13 @@ app.post('/subjects', (req, res) => {
         name,
         priority,
         difficulty,
-        color
+        color,
+        user_id
     } = req.body;
 
     db.query(
-        'INSERT INTO subjects (name, priority, difficulty, color) VALUES (?, ?, ?, ?)',
-        [name, priority, difficulty, color],
+        'INSERT INTO subjects (name, priority, difficulty, color, user_id) VALUES (?, ?, ?, ?, ?)',
+        [name, priority, difficulty, color, user_id],
         (err, result) => {
 
             if (err) {
@@ -258,24 +267,21 @@ app.delete('/subjects/:id', (req, res) => {
 
 app.get('/exams', (req, res) => {
 
-    const sql = `
-        SELECT
-            exams.*,
-            subjects.name AS subject_name
-        FROM exams
-        LEFT JOIN subjects
-        ON exams.subject_id = subjects.id
-    `;
+    const userId = req.query.userId;
 
-    db.query(sql, (err, results) => {
+    db.query(
+        'SELECT * FROM exams WHERE user_id = ?',
+        [userId],
+        (err, results) => {
 
-        if (err) {
-            console.error(err);
-            return res.status(500).json(err);
+            if (err) {
+                console.error(err);
+                return res.status(500).json(err);
+            }
+
+            res.json(results);
         }
-
-        res.json(results);
-    });
+    );
 
 });
 
@@ -285,14 +291,15 @@ app.post('/exams', (req, res) => {
         title,
         subject_id,
         exam_date,
-        exam_type
+        exam_type,
+        user_id
     } = req.body;
 
     db.query(
         `INSERT INTO exams
-        (title, subject_id, exam_date, exam_type)
-        VALUES (?, ?, ?, ?)`,
-        [title, subject_id, exam_date, exam_type],
+        (title, subject_id, exam_date, exam_type, user_id)
+        VALUES (?, ?, ?, ?, ?)`,
+        [title, subject_id, exam_date, exam_type, user_id],
         (err, result) => {
 
             if (err) {
@@ -367,8 +374,11 @@ app.put('/exams/:id', (req, res) => {
 
 app.get('/goals', (req, res) => {
 
+    const userId = req.query.userId;
+
     db.query(
-        'SELECT * FROM goals',
+        'SELECT * FROM goals WHERE user_id = ?',
+        [userId],
         (err, results) => {
 
             if (err) {
@@ -387,14 +397,15 @@ app.post('/goals', (req, res) => {
     const {
         title,
         target_date,
-        progress
+        progress,
+        user_id
     } = req.body;
 
     db.query(
         `INSERT INTO goals
-        (title, target_date, progress)
-        VALUES (?, ?, ?)`,
-        [title, target_date, progress],
+        (title, target_date, progress, user_id)
+        VALUES (?, ?, ?, ?)`,
+        [title, target_date, progress, user_id],
         (err, result) => {
 
             if (err) {
@@ -473,25 +484,21 @@ app.delete('/goals/:id', (req, res) => {
 
 app.get('/focus-sessions', (req, res) => {
 
-    const sql = `
-        SELECT
-            focus_sessions.*,
-            subjects.name AS subject_name
-        FROM focus_sessions
-        LEFT JOIN subjects
-        ON focus_sessions.subject_id = subjects.id
-        ORDER BY session_date DESC
-    `;
+    const userId = req.query.userId;
 
-    db.query(sql, (err, results) => {
+    db.query(
+        'SELECT * FROM focus_sessions WHERE user_id = ? ORDER BY session_date DESC',
+        [userId],
+        (err, results) => {
 
-        if (err) {
-            console.error(err);
-            return res.status(500).json(err);
+            if (err) {
+                console.error(err);
+                return res.status(500).json(err);
+            }
+
+            res.json(results);
         }
-
-        res.json(results);
-    });
+    );
 
 });
 
@@ -499,14 +506,15 @@ app.post('/focus-sessions', (req, res) => {
 
     const {
         subject_id,
-        duration
+        duration,
+        user_id
     } = req.body;
 
     db.query(
         `INSERT INTO focus_sessions
-        (subject_id, duration)
-        VALUES (?, ?)`,
-        [subject_id, duration],
+        (subject_id, duration, user_id)
+        VALUES (?, ?, ?)`,
+        [subject_id, duration, user_id],
         (err, result) => {
 
             if (err) {
@@ -560,6 +568,116 @@ app.put('/achievements/:id', (req, res) => {
             res.json({
                 success: true
             });
+        }
+    );
+
+});
+
+app.post('/register', async (req, res) => {
+
+    try {
+
+        const {
+            username,
+            email,
+            password
+        } = req.body;
+
+        const hashedPassword =
+            await bcrypt.hash(password, 10);
+
+        db.query(
+            `INSERT INTO users
+            (username,email,password)
+            VALUES (?,?,?)`,
+            [
+                username,
+                email,
+                hashedPassword
+            ],
+            (err, result) => {
+
+                if (err) {
+                    console.error(err);
+                    return res.status(500).json(err);
+                }
+
+                res.json({
+                    success: true
+                });
+
+            }
+        );
+
+    } catch (err) {
+
+        console.error(err);
+        res.status(500).json(err);
+
+    }
+
+});
+
+app.post('/login', (req, res) => {
+
+    const {
+        email,
+        password
+    } = req.body;
+
+    db.query(
+        'SELECT * FROM users WHERE email=?',
+        [email],
+        async (err, results) => {
+
+            if (err) {
+                console.error(err);
+                return res.status(500).json(err);
+            }
+
+            if (results.length === 0) {
+                return res.status(401).json({
+                    message: 'User not found'
+                });
+            }
+
+            const user = results[0];
+
+            const validPassword =
+                await bcrypt.compare(
+                    password,
+                    user.password
+                );
+
+            if (!validPassword) {
+
+                return res.status(401).json({
+                    message: 'Invalid password'
+                });
+
+            }
+
+            const token = jwt.sign(
+                {
+                    id: user.id,
+                    email: user.email
+                },
+                JWT_SECRET,
+                {
+                    expiresIn: '7d'
+                }
+            );
+
+            res.json({
+                success: true,
+                token,
+                user: {
+                    id: user.id,
+                    username: user.username,
+                    email: user.email
+                }
+            });
+
         }
     );
 
