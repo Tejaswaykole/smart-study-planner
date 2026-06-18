@@ -330,3 +330,237 @@ app.delete('/exams/:id', (req, res) => {
     );
 
 });
+
+app.put('/exams/:id', (req, res) => {
+
+    const examId = req.params.id;
+
+    const {
+        title,
+        subject_id,
+        exam_date,
+        exam_type
+    } = req.body;
+
+    db.query(
+        `UPDATE exams
+         SET title = ?,
+             subject_id = ?,
+             exam_date = ?,
+             exam_type = ?
+         WHERE id = ?`,
+        [title, subject_id, exam_date, exam_type, examId],
+        (err, result) => {
+
+            if (err) {
+                console.error(err);
+                return res.status(500).json(err);
+            }
+
+            res.json({
+                success: true
+            });
+        }
+    );
+
+});
+
+app.get('/goals', (req, res) => {
+
+    db.query(
+        'SELECT * FROM goals',
+        (err, results) => {
+
+            if (err) {
+                console.error(err);
+                return res.status(500).json(err);
+            }
+
+            res.json(results);
+        }
+    );
+
+});
+
+app.post('/goals', (req, res) => {
+
+    const {
+        title,
+        target_date,
+        progress
+    } = req.body;
+
+    db.query(
+        `INSERT INTO goals
+        (title, target_date, progress)
+        VALUES (?, ?, ?)`,
+        [title, target_date, progress],
+        (err, result) => {
+
+            if (err) {
+                console.error(err);
+                return res.status(500).json(err);
+            }
+
+            res.json({
+                success: true,
+                id: result.insertId
+            });
+        }
+    );
+
+});
+
+app.put('/goals/:id', (req, res) => {
+
+    const goalId = req.params.id;
+
+    let {
+        title,
+        target_date,
+        progress,
+        completed
+    } = req.body;
+
+    if (target_date) {
+        target_date = target_date.split('T')[0];
+    }
+
+    db.query(
+        `UPDATE goals
+         SET title = ?,
+             target_date = ?,
+             progress = ?,
+             completed = ?
+         WHERE id = ?`,
+        [title, target_date, progress, completed, goalId],
+        (err, result) => {
+
+            if (err) {
+                console.error(err);
+                return res.status(500).json(err);
+            }
+
+            res.json({
+                success: true
+            });
+        }
+    );
+
+});
+
+app.delete('/goals/:id', (req, res) => {
+
+    const goalId = req.params.id;
+
+    db.query(
+        'DELETE FROM goals WHERE id = ?',
+        [goalId],
+        (err, result) => {
+
+            if (err) {
+                console.error(err);
+                return res.status(500).json(err);
+            }
+
+            res.json({
+                success: true
+            });
+        }
+    );
+
+});
+
+app.get('/focus-sessions', (req, res) => {
+
+    const sql = `
+        SELECT
+            focus_sessions.*,
+            subjects.name AS subject_name
+        FROM focus_sessions
+        LEFT JOIN subjects
+        ON focus_sessions.subject_id = subjects.id
+        ORDER BY session_date DESC
+    `;
+
+    db.query(sql, (err, results) => {
+
+        if (err) {
+            console.error(err);
+            return res.status(500).json(err);
+        }
+
+        res.json(results);
+    });
+
+});
+
+app.post('/focus-sessions', (req, res) => {
+
+    const {
+        subject_id,
+        duration
+    } = req.body;
+
+    db.query(
+        `INSERT INTO focus_sessions
+        (subject_id, duration)
+        VALUES (?, ?)`,
+        [subject_id, duration],
+        (err, result) => {
+
+            if (err) {
+                console.error(err);
+                return res.status(500).json(err);
+            }
+
+            res.json({
+                success: true,
+                id: result.insertId
+            });
+        }
+    );
+
+});
+
+app.get('/achievements', (req, res) => {
+
+    db.query(
+        'SELECT * FROM achievements',
+        (err, results) => {
+
+            if (err) {
+                console.error(err);
+                return res.status(500).json(err);
+            }
+
+            res.json(results);
+        }
+    );
+
+});
+
+app.put('/achievements/:id', (req, res) => {
+
+    const achievementId = req.params.id;
+
+    db.query(
+        `UPDATE achievements
+         SET unlocked = TRUE,
+             unlocked_date = NOW()
+         WHERE id = ?`,
+        [achievementId],
+        (err, result) => {
+
+            if (err) {
+                console.error(err);
+                return res.status(500).json(err);
+            }
+
+            res.json({
+                success: true
+            });
+        }
+    );
+
+});

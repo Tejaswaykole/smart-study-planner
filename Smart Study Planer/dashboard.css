@@ -962,11 +962,18 @@ body.dashboard-body {
 .goal-slider {
   flex-grow: 1;
   height: 6px;
-  -webkit-appearance: none;
-  background: rgba(0, 0, 0, 0.2);
-  outline: none;
   border-radius: 999px;
+  outline: none;
+  -webkit-appearance: none;
+  background: linear-gradient(
+    to right,
+    var(--primary-color) 0%,
+    var(--primary-color) var(--progress, 0%),
+    rgba(0,0,0,0.2) var(--progress, 0%),
+    rgba(0,0,0,0.2) 100%
+  );
 }
+
 
 .goal-slider::-webkit-slider-thumb {
   -webkit-appearance: none;

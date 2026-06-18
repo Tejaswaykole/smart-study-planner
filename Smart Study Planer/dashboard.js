@@ -23,15 +23,21 @@ let state = {
   therapyMode: 'focus'
 };
 
+let achievementsLoaded = false;
+
 // Default structures if empty
 const DEFAULT_ACHIEVEMENTS = [
   { id: 'focus_rookie', title: 'Focus Rookie', desc: 'Complete your first Pomodoro focus session.', icon: '🎓', unlocked: false, date: null },
   { id: 'focus_mastery', title: 'Focus Mastery', desc: 'Accumulate 10 total study hours.', icon: '👑', unlocked: false, date: null },
+  { id: 'focus_marathon', title: 'Focus Marathon', desc: 'Study for 25 total hours.', icon: '🏃', unlocked: false, date: null },
   { id: 'task_solver', title: 'Task Solver', desc: 'Complete your first study task.', icon: '🎯', unlocked: false, date: null },
   { id: 'task_crusher', title: 'Task Crusher', desc: 'Complete 10 total tasks.', icon: '⚔️', unlocked: false, date: null },
+  { id: 'productivity_pro', title: 'Productivity Pro', desc: 'Maintain 80% task completion rate.', icon: '📈', unlocked: false, date: null },
   { id: 'streak_builder', title: 'Streak Builder', desc: 'Reach a 3-day daily study streak.', icon: '🔥', unlocked: false, date: null },
   { id: 'streak_legend', title: 'Streak Legend', desc: 'Reach a 7-day daily study streak.', icon: '⚡', unlocked: false, date: null },
-  { id: 'exam_slayer', title: 'Exam Slayer', desc: 'Have at least one scheduled exam in your dashboard.', icon: '🛡️', unlocked: false, date: null }
+  { id: 'exam_slayer', title: 'Exam Slayer', desc: 'Have at least one scheduled exam in your dashboard.', icon: '🛡️', unlocked: false, date: null },
+  { id: 'goal_starter', title: 'Goal Starter', desc: 'Complete your first goal.', icon: '🏁', unlocked: false, date: null },
+  { id: 'goal_conqueror', title: 'Goal Conqueror', desc: 'Complete 5 goals.', icon: '🏆', unlocked: false, date: null }
 ];
 
 const MOTIVATIONAL_QUOTES = [
@@ -62,10 +68,13 @@ let adminActivityChart = null;
 document.addEventListener('DOMContentLoaded', () => {
   loadDataFromStorage();
 
+  loadAchievementsFromDatabase();
   loadTasksFromDatabase();
   loadSubjectsFromDatabase();
   loadExamsFromDatabase();
- 
+  loadGoalsFromDatabase();
+  loadFocusSessionsFromDatabase();
+
   initThemeAndTherapy();
   setupEventListeners();
   handleHashNavigation();
@@ -161,6 +170,77 @@ function loadExamsFromDatabase() {
 
     })
     .catch(err => console.error(err));
+}
+function loadGoalsFromDatabase() {
+
+  fetch('http://localhost:5000/goals')
+    .then(res => res.json())
+    .then(data => {
+
+      state.goals = data.map(g => ({
+        id: g.id,
+        title: g.title,
+        targetDate: g.target_date,
+        progress: g.progress || 0,
+        completed: !!g.completed
+      }));
+
+      updateDashboardUI();
+
+    })
+    .catch(err => console.error(err));
+}
+function loadFocusSessionsFromDatabase() {
+
+  fetch('http://localhost:5000/focus-sessions')
+    .then(res => res.json())
+    .then(data => {
+
+      state.focusLogs = data.map(log => ({
+        id: log.id,
+        duration: log.duration,
+        subjectId: log.subject_id,
+        timestamp: log.session_date
+      }));
+
+      renderFocusSessionsList();
+      updateDashboardUI();
+
+    })
+    .catch(err => console.error(err));
+
+}
+function loadAchievementsFromDatabase() {
+
+  fetch('http://localhost:5000/achievements')
+    .then(res => res.json())
+    .then(data => {
+
+      data.forEach(dbAchievement => {
+
+        const localAchievement =
+          state.achievements.find(
+            a => a.id === dbAchievement.id
+          );
+
+        if (localAchievement) {
+
+          localAchievement.unlocked =
+            !!dbAchievement.unlocked;
+
+          localAchievement.date =
+            dbAchievement.unlocked_date;
+
+        }
+
+      });
+
+      renderAchievements();
+      achievementsLoaded = true;
+
+    })
+    .catch(err => console.error(err));
+
 }
 // --- SETUP THEME & THERAPY ---
 function initThemeAndTherapy() {
@@ -357,6 +437,13 @@ function openModal(modalId) {
     if (modalId === 'add-goal-modal' && !document.getElementById('edit-goal-id').value) {
       document.getElementById('add-goal-form').reset();
       document.getElementById('goal-modal-title').textContent = "Set Study Goal";
+      const progressInput = document.getElementById('goal-progress');
+      if (progressInput) {
+        progressInput.value = 0;
+        progressInput.style.setProperty('--progress', '0%');
+      }
+      const valSpan = document.getElementById('goal-progress-val');
+      if (valSpan) valSpan.textContent = '0';
     }
   }
 }
@@ -733,9 +820,6 @@ function renderExamsList() {
     return;
   }
 
-  // Trigger achievement check
-  checkAchievements();
-
   grid.innerHTML = state.exams.map(e => {
     const sub = state.subjects.find(s => s.id === e.subjectId);
     const subColor = sub ? sub.color : 'var(--primary-color)';
@@ -811,10 +895,30 @@ function saveExam(event) {
   const dateTime = document.getElementById('exam-datetime').value;
 
   if (editId) {
-    const index = state.exams.findIndex(e => e.id === editId);
-    if (index !== -1) {
-      state.exams[index] = { ...state.exams[index], name, subjectId, dateTime };
-    }
+    fetch(`http://localhost:5000/exams/${editId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        title: name,
+        subject_id: subjectId,
+        exam_date: dateTime,
+        exam_type: 'Exam'
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        alert('Exam updated successfully!');
+        loadExamsFromDatabase();
+        closeModal('add-exam-modal');
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Failed to update exam');
+      });
+
+    return;
   } else {
     fetch('http://localhost:5000/exams', {
       method: 'POST',
@@ -841,15 +945,16 @@ function saveExam(event) {
 
     return;
   }
-
-  if (editId) {
-    closeModal('add-exam-modal');
-    updateDashboardUI();
-  }
 }
 
 function editExam(id) {
-  const e = state.exams.find(ex => ex.id === id);
+
+  console.log("Edit Exam:", id);
+
+  const e = state.exams.find(ex => ex.id == id);
+
+  console.log("Found Exam:", e);
+
   if (!e) return;
 
   document.getElementById('edit-exam-id').value = e.id;
@@ -870,18 +975,18 @@ function deleteExam(id) {
   fetch(`http://localhost:5000/exams/${id}`, {
     method: 'DELETE'
   })
-  .then(res => res.json())
-  .then(data => {
+    .then(res => res.json())
+    .then(data => {
 
-    alert('Exam deleted successfully!');
+      alert('Exam deleted successfully!');
 
-    loadExamsFromDatabase();
+      loadExamsFromDatabase();
 
-  })
-  .catch(err => {
-    console.error(err);
-    alert('Failed to delete exam');
-  });
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Failed to delete exam');
+    });
 
 }
 
@@ -1195,6 +1300,31 @@ function resetPomodoroTimer() {
   updateTimerUI(getTimerConfigSeconds());
 }
 
+function stopFocusSession() {
+  const initialTime = getTimerConfigSeconds();
+
+  // Only proceed if the timer has actually run a bit
+  if (timerTimeRemaining >= initialTime) return;
+
+  if (isBreakSession) {
+    resetPomodoroTimer();
+    return;
+  }
+
+  const studiedSeconds = initialTime - timerTimeRemaining;
+  const studiedMinutes = Math.floor(studiedSeconds / 60);
+
+  const saveIt = confirm(`Save this ${studiedMinutes}-minute session?`);
+
+  if (saveIt && studiedMinutes > 0) {
+    const selectedSubject = document.getElementById('timer-subject-select').value;
+    logStudySession(studiedMinutes, selectedSubject);
+  }
+
+  resetPomodoroTimer();
+}
+
+
 function getTimerConfigSeconds() {
   const studyInput = document.getElementById('study-duration-input');
   const breakInput = document.getElementById('break-duration-input');
@@ -1266,25 +1396,50 @@ function handleTimerIntervalFinished() {
 }
 
 function logStudySession(durationMin, subjectId) {
-  const newLog = {
-    id: 'log_' + Date.now(),
-    duration: durationMin,
-    subjectId: subjectId || null,
-    timestamp: new Date().toISOString()
-  };
-  state.focusLogs.push(newLog);
 
-  // Increment streak daily active validation
-  incrementStreak();
+  fetch('http://localhost:5000/focus-sessions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      subject_id: subjectId || null,
+      duration: durationMin
+    })
+  })
+    .then(res => res.json())
+    .then(data => {
 
-  saveDataToStorage();
-  checkAchievements();
-  updateDashboardUI();
+      const newLog = {
+        id: data.id,
+        duration: durationMin,
+        subjectId: subjectId || null,
+        timestamp: new Date().toISOString()
+      };
 
-  // Log into institutional audits
-  logAdminActivity("STU-101 (You)", `Completed a ${durationMin}m study session`, subjectId ? getSubjectName(subjectId) : 'N/A', `${durationMin} mins`);
+      state.focusLogs.push(newLog);
 
-  renderFocusSessionsList();
+      incrementStreak();
+
+      checkAchievements();
+
+      updateDashboardUI();
+
+      logAdminActivity(
+        "STU-101 (You)",
+        `Completed a ${durationMin}m study session`,
+        subjectId ? getSubjectName(subjectId) : 'N/A',
+        `${durationMin} mins`
+      );
+
+      renderFocusSessionsList();
+
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Failed to save focus session');
+    });
+
 }
 
 function renderFocusSessionsList() {
@@ -1337,9 +1492,14 @@ function renderGoalsList() {
           <button class="card-options-btn" onclick="editGoal('${g.id}')">✏️</button>
         </div>
         
-        <div class="goal-progress-slider">
-          <input type="range" class="goal-slider" min="0" max="100" value="${g.progress}" onchange="updateGoalProgress('${g.id}', this.value)">
-          <span class="goal-pct-lbl">${g.progress}%</span>
+        <div class="sub-progress-area" style="margin: 14px 0;">
+          <div class="progress-stats">
+            <span>Goal Progress</span>
+            <span>${g.progress}%</span>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" style="width: ${g.progress}%; --sub-theme-color: var(--primary-color);"></div>
+          </div>
         </div>
         
         <div class="exam-details">
@@ -1365,69 +1525,154 @@ function saveGoal(event) {
   const progress = parseInt(document.getElementById('goal-progress').value) || 0;
 
   if (editId) {
-    const index = state.goals.findIndex(g => g.id === editId);
-    if (index !== -1) {
-      state.goals[index] = { ...state.goals[index], title, targetDate, progress, completed: progress === 100 };
-    }
-  } else {
-    const newGoal = {
-      id: 'goal_' + Date.now(),
-      title,
-      targetDate,
-      progress,
-      completed: progress === 100
-    };
-    state.goals.push(newGoal);
-  }
+    fetch(`http://localhost:5000/goals/${editId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        title,
+        target_date: targetDate.split('T')[0],
+        progress,
+        completed: progress === 100
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        alert('Goal updated successfully!');
+        loadGoalsFromDatabase();
+        closeModal('add-goal-modal');
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Failed to update goal');
+      });
 
-  saveDataToStorage();
-  closeModal('add-goal-modal');
-  updateDashboardUI();
+    return;
+  } else {
+    fetch('http://localhost:5000/goals', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        title,
+        target_date: targetDate,
+        progress
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        alert('Goal saved successfully!');
+        loadGoalsFromDatabase();
+        closeModal('add-goal-modal');
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Failed to save goal');
+      });
+
+    return;
+  }
 }
 
 function editGoal(id) {
-  const g = state.goals.find(goal => goal.id === id);
+  const g = state.goals.find(goal => goal.id == id);
   if (!g) return;
 
   document.getElementById('edit-goal-id').value = g.id;
   document.getElementById('goal-title').value = g.title;
   document.getElementById('goal-targetdate').value = g.targetDate;
-  document.getElementById('goal-progress').value = g.progress;
+
+  const progressInput = document.getElementById('goal-progress');
+  if (progressInput) {
+    progressInput.value = g.progress;
+    progressInput.style.setProperty('--progress', g.progress + '%');
+  }
+  const valSpan = document.getElementById('goal-progress-val');
+  if (valSpan) valSpan.textContent = g.progress;
 
   document.getElementById('goal-modal-title').textContent = "Modify Target Objective";
   openModal('add-goal-modal');
 }
 
 function updateGoalProgress(id, value) {
-  const index = state.goals.findIndex(g => g.id === id);
-  if (index !== -1) {
-    const g = state.goals[index];
-    g.progress = parseInt(value);
-    g.completed = g.progress === 100;
-    saveDataToStorage();
-    checkAchievements();
-    updateDashboardUI();
-  }
+  const progress = parseInt(value);
+  const completed = progress === 100;
+
+  const g = state.goals.find(goal => goal.id == id);
+  if (!g) return;
+
+  fetch(`http://localhost:5000/goals/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      title: g.title,
+      target_date: g.targetDate,
+      progress: progress,
+      completed: completed
+    })
+  })
+    .then(res => res.json())
+    .then(data => {
+      checkAchievements();
+      loadGoalsFromDatabase();
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Failed to update goal progress');
+    });
 }
 
 function toggleGoalStatus(id) {
-  const index = state.goals.findIndex(g => g.id === id);
-  if (index !== -1) {
-    const g = state.goals[index];
-    g.completed = !g.completed;
-    g.progress = g.completed ? 100 : 0;
-    saveDataToStorage();
-    checkAchievements();
-    updateDashboardUI();
-  }
+  const g = state.goals.find(goal => goal.id == id);
+  if (!g) return;
+
+  const nextCompleted = !g.completed;
+  const nextProgress = nextCompleted ? 100 : 0;
+
+  fetch(`http://localhost:5000/goals/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      title: g.title,
+      target_date: g.targetDate,
+      progress: nextProgress,
+      completed: nextCompleted
+    })
+  })
+    .then(res => res.json())
+    .then(data => {
+      checkAchievements();
+      loadGoalsFromDatabase();
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Failed to toggle goal status');
+    });
 }
 
 function deleteGoal(id) {
-  if (confirm("Delete this study objective?")) {
-    state.goals = state.goals.filter(g => g.id !== id);
-    saveDataToStorage();
-    updateDashboardUI();
+  if (!confirm("Delete this study objective?")) {
+    return;
   }
+
+  fetch(`http://localhost:5000/goals/${id}`, {
+    method: 'DELETE'
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert('Goal deleted successfully!');
+      loadGoalsFromDatabase();
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Failed to delete goal');
+    });
 }
 
 // --- 7. STREAKS SYSTEM ---
@@ -1791,10 +2036,15 @@ function renderAchievements() {
 }
 
 function checkAchievements() {
+  if (!achievementsLoaded) {
+    return;
+  }
   let updated = false;
 
   const totalHours = state.focusLogs.reduce((acc, log) => acc + log.duration, 0) / 60;
   const completedTasks = state.tasks.filter(t => t.completed).length;
+  const completedGoals = state.goals.filter(g => g.completed).length;
+  const totalTasks = state.tasks.length;
 
   state.achievements.forEach(a => {
     if (a.unlocked) return; // already achieved
@@ -1804,6 +2054,10 @@ function checkAchievements() {
       updated = true;
     }
     if (a.id === 'focus_mastery' && totalHours >= 10.0) {
+      unlockBadge(a);
+      updated = true;
+    }
+    if (a.id === 'focus_marathon' && totalHours >= 25.0) {
       unlockBadge(a);
       updated = true;
     }
@@ -1827,6 +2081,18 @@ function checkAchievements() {
       unlockBadge(a);
       updated = true;
     }
+    if (a.id === 'goal_starter' && completedGoals >= 1) {
+      unlockBadge(a);
+      updated = true;
+    }
+    if (a.id === 'goal_conqueror' && completedGoals >= 5) {
+      unlockBadge(a);
+      updated = true;
+    }
+    if (a.id === 'productivity_pro' && totalTasks >= 10 && (completedTasks / totalTasks) >= 0.8) {
+      unlockBadge(a);
+      updated = true;
+    }
   });
 
   if (updated) {
@@ -1836,14 +2102,25 @@ function checkAchievements() {
 }
 
 function unlockBadge(achievement) {
+
+  if (achievement.unlocked) {
+    return;
+  }
+
   achievement.unlocked = true;
   achievement.date = new Date().toISOString();
 
-  // Show achievement unlock alert banner
-  alert(`🏆 Achievement Unlocked: ${achievement.title}!\n"${achievement.desc}"`);
+  fetch(`http://localhost:5000/achievements/${achievement.id}`, {
+    method: 'PUT'
+  })
+    .catch(err => console.error(err));
 
-  // Audit log
-  logAdminActivity("STU-101 (You)", `Unlocked Achievement Badge: ${achievement.title}`, 'Achievement', 'Badge Claimed');
+  alert(
+    `🏆 Achievement Unlocked: ${achievement.title}!\n"${achievement.desc}"`
+  );
+
+  renderAchievements();
+
 }
 
 // --- 11. ADMIN INSTITUTIONAL PORTAL ---
