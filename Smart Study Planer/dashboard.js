@@ -891,7 +891,8 @@ function saveTask(event) {
       body: JSON.stringify({
         title,
         priority,
-        due_date: dueDate
+        due_date: dueDate,
+        subject_id: subjectId
       })
     })
       .then(res => res.json())
@@ -930,29 +931,53 @@ function editTask(id) {
 }
 
 function toggleTaskComplete(id) {
-  const index = state.tasks.findIndex(t => t.id === id);
-  if (index !== -1) {
-    const t = state.tasks[index];
-    t.completed = !t.completed;
-    t.completedAt = t.completed ? new Date().toISOString() : null;
 
-    // Increment study streak daily checks if first study event of the day
-    if (t.completed) {
-      incrementStreak();
-    }
+  fetch(`http://localhost:5000/tasks/${id}/complete`, {
+    method: 'PUT'
+  })
+    .then(res => res.json())
+    .then(data => {
 
-    saveDataToStorage();
-    checkAchievements();
-    updateDashboardUI();
-  }
+      const task = state.tasks.find(t => t.id == id);
+
+      if (task && !task.completed) {
+        incrementStreak();
+      }
+
+      checkAchievements();
+
+      loadTasksFromDatabase();
+
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Failed to update task');
+    });
+
 }
 
 function deleteTask(id) {
-  if (confirm("Delete this task?")) {
-    state.tasks = state.tasks.filter(t => t.id !== id);
-    saveDataToStorage();
-    updateDashboardUI();
+
+  if (!confirm("Delete this task?")) {
+    return;
   }
+
+  fetch(`http://localhost:5000/tasks/${id}`, {
+    method: 'DELETE'
+  })
+    .then(res => res.json())
+    .then(data => {
+
+      alert('Task deleted successfully');
+
+      loadTasksFromDatabase();
+
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Failed to delete task');
+    });
+
 }
 
 // --- 5. POMODORO TIMER PANEL ---
@@ -1314,7 +1339,7 @@ function incrementStreak() {
   if (lastDate === todayStr) {
     // Already studied today, streak is valid. Just make sure day of week index is true
     state.streak.weeklyHistory[currentDayOfWeekIndex] = true;
-    saveDataToStorage();
+    // saveDataToStorage();
     return;
   }
 
@@ -1332,7 +1357,7 @@ function incrementStreak() {
   state.streak.lastStudyDate = new Date().toISOString();
   state.streak.weeklyHistory[currentDayOfWeekIndex] = true;
 
-  saveDataToStorage();
+  // saveDataToStorage();
   checkAchievements();
 }
 

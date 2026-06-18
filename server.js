@@ -28,7 +28,18 @@ app.get('/', (req, res) => {
 });
 
 app.get('/tasks', (req, res) => {
-    db.query('SELECT * FROM tasks', (err, results) => {
+
+    const sql = `
+        SELECT
+            tasks.*,
+            subjects.name AS subject_name
+        FROM tasks
+        LEFT JOIN subjects
+        ON tasks.subject_id = subjects.id
+    `;
+
+    db.query(sql, (err, results) => {
+
         if (err) {
             console.error(err);
             return res.status(500).json(err);
@@ -38,12 +49,19 @@ app.get('/tasks', (req, res) => {
     });
 });
 app.post('/tasks', (req, res) => {
-    const { title, priority, due_date } = req.body;
+
+    const {
+        title,
+        priority,
+        due_date,
+        subject_id
+    } = req.body;
 
     db.query(
-        'INSERT INTO tasks (title, priority, due_date) VALUES (?, ?, ?)',
-        [title, priority, due_date],
+        'INSERT INTO tasks (title, priority, due_date, subject_id) VALUES (?, ?, ?, ?)',
+        [title, priority, due_date, subject_id],
         (err, result) => {
+
             if (err) {
                 console.error(err);
                 return res.status(500).json(err);
@@ -56,6 +74,51 @@ app.post('/tasks', (req, res) => {
         }
     );
 });
+
+app.delete('/tasks/:id', (req, res) => {
+
+    const taskId = req.params.id;
+
+    db.query(
+        'DELETE FROM tasks WHERE id = ?',
+        [taskId],
+        (err, result) => {
+
+            if (err) {
+                console.error(err);
+                return res.status(500).json(err);
+            }
+
+            res.json({
+                success: true
+            });
+        }
+    );
+
+});
+
+app.put('/tasks/:id/complete', (req, res) => {
+
+    const taskId = req.params.id;
+
+    db.query(
+        'UPDATE tasks SET completed = NOT completed WHERE id = ?',
+        [taskId],
+        (err, result) => {
+
+            if (err) {
+                console.error(err);
+                return res.status(500).json(err);
+            }
+
+            res.json({
+                success: true
+            });
+        }
+    );
+
+});
+
 const server = app.listen(5000, () => {
     console.log('Server running on port 5000');
 });
