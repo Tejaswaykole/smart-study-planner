@@ -119,6 +119,40 @@ app.put('/tasks/:id/complete', (req, res) => {
 
 });
 
+app.put('/tasks/:id', (req, res) => {
+
+    const taskId = req.params.id;
+
+    const {
+        title,
+        priority,
+        due_date,
+        subject_id
+    } = req.body;
+
+    db.query(
+        `UPDATE tasks
+         SET title = ?,
+             priority = ?,
+             due_date = ?,
+             subject_id = ?
+         WHERE id = ?`,
+        [title, priority, due_date, subject_id, taskId],
+        (err, result) => {
+
+            if (err) {
+                console.error(err);
+                return res.status(500).json(err);
+            }
+
+            res.json({
+                success: true
+            });
+        }
+    );
+
+});
+
 const server = app.listen(5000, () => {
     console.log('Server running on port 5000');
 });
