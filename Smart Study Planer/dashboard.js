@@ -2018,6 +2018,52 @@ function renderAnalyticsCharts() {
     const hrs = (totalMinutes / 60).toFixed(1);
     targetLabel.textContent = `${hrs}h / 40.0h`;
   }
+
+  // Most Productive Subject
+  const prodSubjectLabel = document.getElementById('kpi-prod-subject');
+  if (prodSubjectLabel) {
+    const subjectTotals = {};
+    state.focusLogs.forEach(log => {
+      const subjectName = getSubjectName(log.subjectId);
+      if (!subjectTotals[subjectName]) {
+        subjectTotals[subjectName] = 0;
+      }
+      subjectTotals[subjectName] += log.duration;
+    });
+
+    let bestSubject = '--';
+    let maxMinutes = 0;
+    Object.entries(subjectTotals).forEach(([name, mins]) => {
+      if (mins > maxMinutes) {
+        maxMinutes = mins;
+        bestSubject = name;
+      }
+    });
+    prodSubjectLabel.textContent = bestSubject;
+  }
+
+  // Most Productive Day
+  const prodDayLabel = document.getElementById('kpi-prod-day');
+  if (prodDayLabel) {
+    const dayTotals = {};
+    state.focusLogs.forEach(log => {
+      const day = new Date(log.timestamp).toLocaleDateString(undefined, { weekday: 'long' });
+      if (!dayTotals[day]) {
+        dayTotals[day] = 0;
+      }
+      dayTotals[day] += log.duration;
+    });
+
+    let bestDay = '--';
+    let maxMinutes = 0;
+    Object.entries(dayTotals).forEach(([day, mins]) => {
+      if (mins > maxMinutes) {
+        maxMinutes = mins;
+        bestDay = day;
+      }
+    });
+    prodDayLabel.textContent = bestDay;
+  }
 }
 
 // --- 10. ACHIEVEMENTS SYSTEM ---
@@ -2115,8 +2161,9 @@ function unlockBadge(achievement) {
   })
     .catch(err => console.error(err));
 
-  alert(
-    `🏆 Achievement Unlocked: ${achievement.title}!\n"${achievement.desc}"`
+  showToast(
+    `🏆 ${achievement.title}`,
+    achievement.desc
   );
 
   renderAchievements();
@@ -2257,4 +2304,32 @@ function escapeHtml(unsafe) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function showToast(title, message) {
+
+  const container =
+    document.getElementById('toast-container');
+
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+
+  toast.innerHTML = `
+    <div class="toast-title">${title}</div>
+    <div class="toast-desc">${message}</div>
+  `;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(100%)';
+
+    setTimeout(() => {
+      toast.remove();
+    }, 300);
+
+  }, 4000);
 }

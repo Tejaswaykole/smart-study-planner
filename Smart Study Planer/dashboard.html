@@ -378,6 +378,10 @@
                   <span class="kpi-val" id="kpi-prod-day">Wednesday</span>
                 </div>
                 <div class="kpi-item">
+                  <span class="kpi-lbl">Most Productive Subject:</span>
+                  <span class="kpi-val" id="kpi-prod-subject">--</span>
+                </div>
+                <div class="kpi-item">
                   <span class="kpi-lbl">Avg. Focus Session Length:</span>
                   <span class="kpi-val" id="kpi-avg-session">25.0 min</span>
                 </div>
@@ -656,6 +660,9 @@
   <!-- UI Audio alert elements for timer completion (Uses synthesizer fallback in JS, but nice tags here for compatibility) -->
   <audio id="success-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-84.wav" preload="auto"></audio>
   <audio id="break-sound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav" preload="auto"></audio>
+
+  <!-- Toast Notifications Container -->
+  <div id="toast-container"></div>
 
   <!-- Script Import -->
   <script src="dashboard.js"></script>
