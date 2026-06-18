@@ -64,7 +64,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadTasksFromDatabase();
   loadSubjectsFromDatabase();
-
+  loadExamsFromDatabase();
+ 
   initThemeAndTherapy();
   setupEventListeners();
   handleHashNavigation();
@@ -138,6 +139,25 @@ function loadSubjectsFromDatabase() {
 
       renderSubjectsList();
       populateDropdownSelectors();
+
+    })
+    .catch(err => console.error(err));
+}
+function loadExamsFromDatabase() {
+
+  fetch('http://localhost:5000/exams')
+    .then(res => res.json())
+    .then(data => {
+
+      state.exams = data.map(exam => ({
+        id: exam.id,
+        name: exam.title,
+        subjectId: exam.subject_id,
+        dateTime: exam.exam_date,
+        examType: exam.exam_type
+      }));
+
+      updateDashboardUI();
 
     })
     .catch(err => console.error(err));
@@ -603,11 +623,30 @@ function saveSubject(event) {
   const color = document.querySelector('input[name="sub-color"]:checked').value;
 
   if (editId) {
-    // Edit Mode
-    const index = state.subjects.findIndex(s => s.id === editId);
-    if (index !== -1) {
-      state.subjects[index] = { ...state.subjects[index], name, priority, difficulty, color };
-    }
+    fetch(`http://localhost:5000/subjects/${editId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name,
+        priority,
+        difficulty,
+        color
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        alert('Subject updated successfully!');
+        loadSubjectsFromDatabase();
+        closeModal('add-subject-modal');
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Failed to update subject');
+      });
+
+    return;
   } else {
     // Create Mode
     fetch('http://localhost:5000/subjects', {
@@ -635,16 +674,16 @@ function saveSubject(event) {
 
     return;
   }
-
-  if (editId) {
-    saveDataToStorage();
-    closeModal('add-subject-modal');
-    updateDashboardUI();
-  }
 }
 
 function editSubject(id) {
-  const s = state.subjects.find(sub => sub.id === id);
+
+  console.log("Edit Subject Clicked:", id);
+
+  const s = state.subjects.find(sub => sub.id == id);
+
+  console.log("Subject Found:", s);
+
   if (!s) return;
 
   document.getElementById('edit-subject-id').value = s.id;
@@ -652,7 +691,6 @@ function editSubject(id) {
   document.getElementById('subject-priority').value = s.priority;
   document.getElementById('subject-difficulty').value = s.difficulty;
 
-  // Set checked color radio
   const colorRadio = document.querySelector(`input[name="sub-color"][value="${s.color}"]`);
   if (colorRadio) colorRadio.checked = true;
 
@@ -661,15 +699,28 @@ function editSubject(id) {
 }
 
 function deleteSubject(id) {
-  if (confirm("Are you sure you want to delete this subject? All associated exams and tasks will be orphaned.")) {
-    state.subjects = state.subjects.filter(s => s.id !== id);
-    // Remove tags from tasks/exams
-    state.tasks = state.tasks.filter(t => t.subjectId !== id);
-    state.exams = state.exams.filter(e => e.subjectId !== id);
 
-    // saveDataToStorage();
-    // updateDashboardUI();
+  if (!confirm("Are you sure you want to delete this subject?")) {
+    return;
   }
+
+  fetch(`http://localhost:5000/subjects/${id}`, {
+    method: 'DELETE'
+  })
+    .then(res => res.json())
+    .then(data => {
+
+      alert('Subject deleted successfully!');
+
+      loadSubjectsFromDatabase();
+      loadTasksFromDatabase();
+
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Failed to delete subject');
+    });
+
 }
 
 // --- 3. EXAMS CRUD & countdown ticking ---
@@ -765,18 +816,36 @@ function saveExam(event) {
       state.exams[index] = { ...state.exams[index], name, subjectId, dateTime };
     }
   } else {
-    const newExam = {
-      id: 'exam_' + Date.now(),
-      name,
-      subjectId,
-      dateTime
-    };
-    state.exams.push(newExam);
+    fetch('http://localhost:5000/exams', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        title: name,
+        subject_id: subjectId,
+        exam_date: dateTime,
+        exam_type: 'Exam'
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        alert('Exam saved successfully!');
+        loadExamsFromDatabase();
+        closeModal('add-exam-modal');
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Failed to save exam');
+      });
+
+    return;
   }
 
-  saveDataToStorage();
-  closeModal('add-exam-modal');
-  updateDashboardUI();
+  if (editId) {
+    closeModal('add-exam-modal');
+    updateDashboardUI();
+  }
 }
 
 function editExam(id) {
@@ -793,11 +862,27 @@ function editExam(id) {
 }
 
 function deleteExam(id) {
-  if (confirm("Delete this scheduled exam from calendar?")) {
-    state.exams = state.exams.filter(e => e.id !== id);
-    saveDataToStorage();
-    updateDashboardUI();
+
+  if (!confirm("Delete this scheduled exam from calendar?")) {
+    return;
   }
+
+  fetch(`http://localhost:5000/exams/${id}`, {
+    method: 'DELETE'
+  })
+  .then(res => res.json())
+  .then(data => {
+
+    alert('Exam deleted successfully!');
+
+    loadExamsFromDatabase();
+
+  })
+  .catch(err => {
+    console.error(err);
+    alert('Failed to delete exam');
+  });
+
 }
 
 // --- 4. TASKS CRUD ---
@@ -878,10 +963,30 @@ function saveTask(event) {
   const priority = document.getElementById('task-priority').value;
 
   if (editId) {
-    const index = state.tasks.findIndex(t => t.id === editId);
-    if (index !== -1) {
-      state.tasks[index] = { ...state.tasks[index], title, subjectId, dueDate, priority };
-    }
+    fetch(`http://localhost:5000/tasks/${editId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        title,
+        priority,
+        due_date: dueDate,
+        subject_id: subjectId
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        alert('Task updated successfully!');
+        loadTasksFromDatabase();
+        closeModal('add-task-modal');
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Failed to update task');
+      });
+
+    return;
   } else {
     fetch('http://localhost:5000/tasks', {
       method: 'POST',
@@ -908,16 +1013,16 @@ function saveTask(event) {
 
     return;
   }
-
-  if (editId) {
-    saveDataToStorage();
-    closeModal('add-task-modal');
-    updateDashboardUI();
-  }
 }
 
 function editTask(id) {
-  const t = state.tasks.find(tk => tk.id === id);
+
+  console.log("Edit clicked:", id);
+
+  const t = state.tasks.find(tk => tk.id == id);
+
+  console.log("Task found:", t);
+
   if (!t) return;
 
   document.getElementById('edit-task-id').value = t.id;
@@ -1725,7 +1830,7 @@ function checkAchievements() {
   });
 
   if (updated) {
-    saveDataToStorage();
+    // saveDataToStorage();
     renderAchievements();
   }
 }

@@ -199,3 +199,134 @@ app.post('/subjects', (req, res) => {
         }
     );
 });
+
+app.put('/subjects/:id', (req, res) => {
+
+    const subjectId = req.params.id;
+
+    const {
+        name,
+        priority,
+        difficulty,
+        color
+    } = req.body;
+
+    db.query(
+        `UPDATE subjects
+         SET name = ?,
+             priority = ?,
+             difficulty = ?,
+             color = ?
+         WHERE id = ?`,
+        [name, priority, difficulty, color, subjectId],
+        (err, result) => {
+
+            if (err) {
+                console.error(err);
+                return res.status(500).json(err);
+            }
+
+            res.json({
+                success: true
+            });
+        }
+    );
+
+});
+
+app.delete('/subjects/:id', (req, res) => {
+
+    const subjectId = req.params.id;
+
+    db.query(
+        'DELETE FROM subjects WHERE id = ?',
+        [subjectId],
+        (err, result) => {
+
+            if (err) {
+                console.error(err);
+                return res.status(500).json(err);
+            }
+
+            res.json({
+                success: true
+            });
+        }
+    );
+
+});
+
+app.get('/exams', (req, res) => {
+
+    const sql = `
+        SELECT
+            exams.*,
+            subjects.name AS subject_name
+        FROM exams
+        LEFT JOIN subjects
+        ON exams.subject_id = subjects.id
+    `;
+
+    db.query(sql, (err, results) => {
+
+        if (err) {
+            console.error(err);
+            return res.status(500).json(err);
+        }
+
+        res.json(results);
+    });
+
+});
+
+app.post('/exams', (req, res) => {
+
+    const {
+        title,
+        subject_id,
+        exam_date,
+        exam_type
+    } = req.body;
+
+    db.query(
+        `INSERT INTO exams
+        (title, subject_id, exam_date, exam_type)
+        VALUES (?, ?, ?, ?)`,
+        [title, subject_id, exam_date, exam_type],
+        (err, result) => {
+
+            if (err) {
+                console.error(err);
+                return res.status(500).json(err);
+            }
+
+            res.json({
+                success: true,
+                id: result.insertId
+            });
+        }
+    );
+
+});
+
+app.delete('/exams/:id', (req, res) => {
+
+    const examId = req.params.id;
+
+    db.query(
+        'DELETE FROM exams WHERE id = ?',
+        [examId],
+        (err, result) => {
+
+            if (err) {
+                console.error(err);
+                return res.status(500).json(err);
+            }
+
+            res.json({
+                success: true
+            });
+        }
+    );
+
+});
